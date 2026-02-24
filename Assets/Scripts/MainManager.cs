@@ -7,15 +7,12 @@ using UnityEngine.UI;
 
 public class MainManager : MonoBehaviour
 {
-    public static MainManager Instance;
-
-    public string playerName;
-
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text bestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
@@ -23,23 +20,11 @@ public class MainManager : MonoBehaviour
     
     private bool m_GameOver = false;
 
-    private void Awake()
-    {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-
-        LoadName();
-    }
-
     // Start is called before the first frame update
     void Start()
     {
+        bestScoreText.text = $"Best Score: {DataManager.Instance.BestPlayerName} : {DataManager.Instance.BestScore}";
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -90,33 +75,17 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        OnGameOver(m_Points);
     }
 
-    [System.Serializable]
-    class SaveData
+    public void OnGameOver(int score)
     {
-        public string name;
-    }
-
-    public void SaveName()
-    {
-        SaveData data = new SaveData();
-        data.name = playerName;
-
-        string json = JsonUtility.ToJson(data);
-
-        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
-    }
-
-    public void LoadName()
-    {
-        string path = Application.persistentDataPath + "/savefile.json";
-        if (File.Exists(path))
+        if (score > DataManager.Instance.BestScore)
         {
-            string json = File.ReadAllText(path);
-            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            DataManager.Instance.BestScore = score;
+            DataManager.Instance.BestPlayerName = DataManager.Instance.CurrentPlayerName;
 
-            playerName = data.name;
+            DataManager.Instance.SaveGame();
         }
     }
 }
